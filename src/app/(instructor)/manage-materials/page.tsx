@@ -1,4 +1,4 @@
-import { getMyCreatedSessions } from "@/lib/actions"; // FIX: Import correct action
+import { getMyCreatedSessions } from "@/lib/actions";
 import { MaterialForm } from "@/components/(custom)/manage-materials/MaterialForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Link as LinkIcon, File as FileIcon } from "lucide-react";
@@ -12,12 +12,9 @@ export default async function ManageMaterialsPage() {
   const { userId } = await auth();
   if (!userId) return null;
 
-  // FIX: Use the correct action to get sessions for the form dropdown
   const sessionsForForm = await getMyCreatedSessions();
   
-  // Query to get all materials associated with the user's created sessions
   const sessionsWithMaterials = await db.query.SessionsTable.findMany({
-      // FIX: Use 'creatorId' instead of 'instructorId'
       where: eq(SessionsTable.creatorId, userId),
       with: {
           materials: true
@@ -53,7 +50,16 @@ export default async function ManageMaterialsPage() {
                   <div className="flex items-center gap-4">
                     {material.type === 'file' ? <FileIcon className="h-5 w-5 text-muted-foreground" /> : <LinkIcon className="h-5 w-5 text-muted-foreground" />}
                     <div>
-                      <a href={material.url} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">{material.title}</a>
+                      {/* FIX: Add the 'download' attribute for file types to trigger download */}
+                      <a 
+                        href={material.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="font-semibold hover:underline"
+                        download={material.type === 'file'}
+                      >
+                        {material.title}
+                      </a>
                       <p className="text-sm text-muted-foreground">For: {material.sessionTitle}</p>
                     </div>
                   </div>

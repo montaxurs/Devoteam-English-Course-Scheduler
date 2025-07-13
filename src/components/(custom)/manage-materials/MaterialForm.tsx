@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { materialFormSchema, type MaterialFormValues } from "@/lib/schemas";
 import { createCourseMaterial } from "@/lib/actions";
+import { uploadFile } from "@/lib/upload-actions"; // Import the new upload action
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,27 +17,12 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTransition } from "react";
 import { Loader2, PlusCircle } from "lucide-react";
-
-// Assuming SelectSession is exported from your schema
 import { type SelectSession } from "@/schema";
 
 type MaterialFormProps = {
@@ -48,23 +34,43 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
   const [isPending, startTransition] = useTransition();
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialFormSchema),
-    defaultValues: { title: "", type: "link" },
+    // FIX: Provide default values for ALL fields to prevent uncontrolled input error.
+    defaultValues: {
+      title: "",
+      type: "link",
+      sessionId: undefined,
+      url: "",
+      file: undefined,
+    },
   });
 
   const materialType = form.watch("type");
 
-  function onSubmit(values: MaterialFormValues) {
-    const formData = new FormData();
-    formData.append('title', values.title);
-    formData.append('sessionId', values.sessionId);
-    formData.append('type', values.type);
-    if (values.url) formData.append('url', values.url);
-    if (values.file) formData.append('file', values.file);
-
+  async function onSubmit(values: MaterialFormValues) {
     startTransition(async () => {
-      const result = await createCourseMaterial(values);
-      if (result?.error) {
-        alert(result.error);
+      let materialUrl = values.url;
+
+      // If it's a file, upload it first
+      if (values.type === 'file' && values.file) {
+        const formData = new FormData();
+        formData.append('file', values.file);
+        const uploadResult = await uploadFile(formData);
+
+        if (uploadResult.error || !uploadResult.blob) {
+          alert(uploadResult.error || "File upload failed.");
+          return;
+        }
+        materialUrl = uploadResult.blob.url;
+      }
+
+      // Now, create the database record with the final URL
+      const dbResult = await createCourseMaterial({
+        ...values,
+        url: materialUrl,
+      });
+      
+      if (dbResult?.error) {
+        alert(dbResult.error);
       } else {
         setIsOpen(false);
         form.reset();
@@ -75,17 +81,12 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add New Material
-        </Button>
+        <Button><PlusCircle className="mr-2 h-4 w-4" /> Add New Material</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Course Material</DialogTitle>
-          <DialogDescription>
-            Upload a file or add a link to share with session participants.
-          </DialogDescription>
+          <DialogDescription>Upload a file or add a link to share.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -139,7 +140,7 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>URL</FormLabel>
-                    <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+                    <FormControl><Input placeholder="https://..." {...field} value={field.value || ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -161,7 +162,7 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
                         />
                     </FormControl>
                     <FormMessage />
-                  </FormItem> 
+                  </FormItem>
                 )}
               />
             )}
