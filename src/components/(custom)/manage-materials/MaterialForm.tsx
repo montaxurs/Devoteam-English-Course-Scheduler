@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { materialFormSchema, type MaterialFormValues } from "@/lib/schemas";
 import { createCourseMaterial } from "@/lib/actions";
-import { uploadFile } from "@/lib/upload-actions"; // Import the new upload action
+import { uploadFile } from "@/lib/upload-actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,9 +32,10 @@ type MaterialFormProps = {
 export function MaterialForm({ sessions }: MaterialFormProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isPending, startTransition] = useTransition();
+  
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialFormSchema),
-    // FIX: Provide default values for ALL fields to prevent uncontrolled input error.
+    // FIX: Provide default values for ALL form fields to prevent uncontrolled input error.
     defaultValues: {
       title: "",
       type: "link",
@@ -48,25 +49,28 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
 
   async function onSubmit(values: MaterialFormValues) {
     startTransition(async () => {
-      let materialUrl = values.url;
+      let finalUrl = values.url;
 
-      // If it's a file, upload it first
+      // If the user selected 'file', upload it to Vercel Blob first.
       if (values.type === 'file' && values.file) {
         const formData = new FormData();
         formData.append('file', values.file);
+        
         const uploadResult = await uploadFile(formData);
 
         if (uploadResult.error || !uploadResult.blob) {
-          alert(uploadResult.error || "File upload failed.");
+          alert(uploadResult.error || "A critical error occurred during file upload.");
           return;
         }
-        materialUrl = uploadResult.blob.url;
+        // Use the REAL URL from Vercel Blob.
+        finalUrl = uploadResult.blob.url;
       }
 
-      // Now, create the database record with the final URL
+      // Now, call the database action with the correct, final URL.
       const dbResult = await createCourseMaterial({
         ...values,
-        url: materialUrl,
+        url: finalUrl, // FIX: Pass the real URL to the database action.
+        file: undefined, // We don't need to pass the file object to this action.
       });
       
       if (dbResult?.error) {
@@ -140,7 +144,7 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>URL</FormLabel>
-                    <FormControl><Input placeholder="https://..." {...field} value={field.value || ''} /></FormControl>
+                    <FormControl><Input placeholder="https://..." {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -150,7 +154,7 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
               <FormField
                 control={form.control}
                 name="file"
-                render={({ field: { value, onChange, ...fieldProps } }) => (
+                render={({ field: { onChange, ...fieldProps } }) => (
                   <FormItem>
                     <FormLabel>PDF File</FormLabel>
                     <FormControl>
