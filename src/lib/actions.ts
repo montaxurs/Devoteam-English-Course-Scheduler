@@ -4,71 +4,11 @@ import { revalidatePath } from "next/cache";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { BookingsTable, CourseMaterialsTable, SessionsTable, UsersTable } from "@/schema";
-import { and, eq, gte, desc } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { sessionFormSchema, type SessionFormValues, materialFormSchema, type MaterialFormValues } from "./schemas";
+import { sessionFormSchema, type SessionFormValues, type MaterialFormValues } from "./schemas";
 
-// ... (All of your existing actions up to this point remain the same)
-
-/**
- * ============================================================================
- * MANAGEMENT ACTIONS
- * ============================================================================
- */
-
-export async function getMyCreatedSessions() {
-  const { userId } = await auth();
-  if (!userId) return [];
-  return await db.query.SessionsTable.findMany({
-    where: eq(SessionsTable.creatorId, userId),
-    with: {
-      participants: { columns: { userId: true } },
-    },
-    orderBy: (sessions, { desc }) => [desc(sessions.startTime)],
-  });
-}
-
-/**
- * NEW: Deletes a session from the database.
- * Also performs a security check to ensure the user owns the session.
- * @param sessionId The UUID of the session to delete.
- */
-export async function deleteSession(sessionId: string) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error("You must be logged in to delete a session.");
-  }
-
-  // Security Check: Verify the user owns the session before deleting.
-  const session = await db.query.SessionsTable.findFirst({
-    where: and(
-      eq(SessionsTable.id, sessionId),
-      eq(SessionsTable.creatorId, userId)
-    ),
-    columns: { id: true } // We only need the ID for verification.
-  });
-
-  if (!session) {
-    return { error: "Session not found or you do not have permission to delete it." };
-  }
-
-  try {
-    // Because of 'onDelete: cascade' in our schema, this will also delete
-    // all associated bookings and materials automatically.
-    await db.delete(SessionsTable).where(eq(SessionsTable.id, sessionId));
-  } catch (error) {
-    console.error("Database Delete Error:", error);
-    return { error: "Database Error: Failed to delete session." };
-  }
-
-  // Revalidate paths to update the UI immediately
-  revalidatePath("/manage-sessions");
-  revalidatePath("/dashboard");
-  return { success: "Session deleted successfully." };
-}
-
-
-// ... (The rest of your actions file remains unchanged)
+// --- USER SYNC ---
 export async function syncUser() {
   const user = await currentUser();
   if (!user) return;
@@ -82,6 +22,7 @@ export async function syncUser() {
   });
 }
 
+// --- SESSION & BOOKING ACTIONS ---
 export async function createSession(payload: SessionFormValues) {
   const { userId } = await auth();
   if (!userId) { throw new Error("You must be logged in."); }
@@ -124,15 +65,6 @@ export async function getSessionDetails(sessionId: string) {
       materials: true,
     },
   });
-}
-
-export async function getAllSessionIds() {
-  const sessions = await db.query.SessionsTable.findMany({
-    columns: {
-      id: true,
-    },
-  });
-  return sessions;
 }
 
 export async function createBooking(sessionId: string) {
@@ -186,6 +118,43 @@ export async function cancelBooking(bookingId: string) {
   } catch (e) {
     return { error: "An unexpected error occurred." };
   }
+}
+
+// --- MANAGEMENT ACTIONS ---
+export async function getMyCreatedSessions() {
+  const { userId } = await auth();
+  if (!userId) return [];
+  return await db.query.SessionsTable.findMany({
+    where: eq(SessionsTable.creatorId, userId),
+    with: {
+      participants: { columns: { userId: true } },
+    },
+    orderBy: (sessions, { desc }) => [desc(sessions.startTime)],
+  });
+}
+
+export async function deleteSession(sessionId: string) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("You must be logged in to delete a session.");
+  }
+  const session = await db.query.SessionsTable.findFirst({
+    where: and(
+      eq(SessionsTable.id, sessionId),
+      eq(SessionsTable.creatorId, userId)
+    ),
+    columns: { id: true }
+  });
+  if (!session) {
+    return { error: "Session not found or you do not have permission to delete it." };
+  }
+  try {
+    await db.delete(SessionsTable).where(eq(SessionsTable.id, sessionId));
+  } catch (error) {
+    return { error: "Database Error: Failed to delete session." };
+  }
+  revalidatePath("/manage-sessions");
+  return { success: "Session deleted successfully." };
 }
 
 type CreateMaterialPayload = {

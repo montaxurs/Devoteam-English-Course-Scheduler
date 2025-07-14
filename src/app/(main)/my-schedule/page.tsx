@@ -75,7 +75,7 @@ export default async function MySchedulePage() {
             My Upcoming Sessions
           </h1>
           <p className="text-muted-foreground">
-            Here are all the sessions you've booked.
+            Here are all the sessions you&rsquo;ve booked.
           </p>
         </div>
       </div>
@@ -91,7 +91,7 @@ export default async function MySchedulePage() {
           <CalendarPlus className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold">No Upcoming Sessions</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            You haven't booked any sessions yet.
+            You haven&rsquo;t booked any sessions yet.
           </p>
           <Link href="/dashboard" className="mt-6">
             <Button>Find a Session</Button>

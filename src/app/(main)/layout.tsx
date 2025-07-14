@@ -1,12 +1,8 @@
 import * as React from "react";
 import { AppHeader } from "@/components/(custom)/shared/AppHeader";
-import { syncUser } from "@/lib/actions";
 
-// This is an invisible server component that ensures the user is synced.
-async function UserSync() {
-  await syncUser();
-  return null; // This component renders nothing.
-}
+// FIX: The unused 'UserSync' function and its import have been removed.
+// This logic now lives in the root layout.
 
 export default function MainAppLayout({
   children,

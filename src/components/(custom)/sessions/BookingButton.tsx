@@ -29,7 +29,7 @@ export function BookingButton({ sessionId, isFull, isBookedByUser }: BookingButt
     return (
       <Button disabled variant="secondary" className="w-full">
         <CheckCircle className="mr-2 h-4 w-4" />
-        You're Booked
+        You&rsquo;re Booked
       </Button>
     );
   }

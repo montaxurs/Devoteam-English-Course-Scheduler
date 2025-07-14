@@ -18,7 +18,6 @@ import {
   Sun,
   Moon
 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 
@@ -220,7 +219,7 @@ export default function LandingPage() {
             <Coffee className="mx-auto w-12 h-12 text-primary mb-4"/>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Session Timings & Break</h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              We've structured the course timings to fit conveniently within your workday.
+              We&rsquo;ve structured the course timings to fit conveniently within your workday.
             </p>
             <div className="mt-12 grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
               <div className="p-8 bg-card rounded-lg shadow-md border">
@@ -256,7 +255,7 @@ export default function LandingPage() {
                 <Card className="h-full flex flex-col justify-center p-8 bg-card shadow-lg">
                   <CardContent className="p-0">
                     <blockquote className="text-lg italic border-l-4 border-primary pl-6">
-                      "{testimonial.quote}"
+                      &ldquo;{testimonial.quote}&rdquo;
                     </blockquote>
                     <p className="mt-6 font-semibold text-right">— {testimonial.name}, <span className="text-muted-foreground font-normal">{testimonial.department}</span></p>
                   </CardContent>

@@ -7,12 +7,6 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Moon, Sun } from "lucide-react";
 
@@ -48,8 +42,7 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
 
 // --- Main AppHeader Component ---
 export function AppHeader() {
-    const { user } = useUser();
-    const isInstructor = user?.publicMetadata?.role === 'instructor';
+    // const { user } = useUser();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
