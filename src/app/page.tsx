@@ -124,7 +124,7 @@ export default function LandingPage() {
               className="hidden lg:flex justify-center"
             >
               <Image 
-                src="/devoteam English Course Scheduler.jpg" 
+                src="/devoteam English Course Scheduler Tn.jpg" 
                 alt="Scheduler illustration" 
                 width={450} 
                 height={450}
@@ -243,7 +243,7 @@ export default function LandingPage() {
           </div>
           <div className="mt-16 grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {[
-              { quote: "The scheduler made it so easy to find a session that fit my busy schedule. A fantastic tool!", name: "Alex Doe", department: "Creative Tech" },
+              { quote: "The scheduler made it so easy to find a session that fit my busy schedule. A fantastic tool!", name: "Montassar Abdellaoui", department: "AI Engineer" },
               { quote: "I love being able to see who else is joining. It makes the sessions feel more connected and collaborative.", name: "Jordan Smith", department: "Cloud Services" }
             ].map((testimonial, i) => (
               <motion.div
@@ -301,7 +301,7 @@ export default function LandingPage() {
               </p>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Devoteam. All rights reserved.
+              © {new Date().getFullYear()} Devoteam Tunisia. All rights reserved.
             </p>
           </div>
         </div>

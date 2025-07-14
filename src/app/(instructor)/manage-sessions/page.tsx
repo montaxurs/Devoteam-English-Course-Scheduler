@@ -1,12 +1,17 @@
 import Link from "next/link";
-// FIX: Import the new, correct server action
 import { getMyCreatedSessions } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PlusCircle, Users, Clock } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PlusCircle, Users, Clock, MoreHorizontal } from "lucide-react";
+import { DeleteSessionButton } from "@/components/(custom)/manage-sessions/DeleteSessionButton";
 
 export default async function ManageSessionsPage() {
-  // FIX: Call the new, correct server action
   const sessions = await getMyCreatedSessions();
 
   return (
@@ -17,7 +22,7 @@ export default async function ManageSessionsPage() {
             Manage Your Sessions
           </h1>
           <p className="text-muted-foreground">
-            Here you can create new sessions and view your existing ones.
+            Here you can create, view, and manage your sessions.
           </p>
         </div>
         <Link href="/manage-sessions/new">
@@ -32,11 +37,25 @@ export default async function ManageSessionsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {sessions.map((session) => (
             <Card key={session.id}>
-              <CardHeader>
-                <CardTitle>{session.title}</CardTitle>
-                <CardDescription>
-                  {new Date(session.startTime).toLocaleDateString('en-US', { dateStyle: 'long' })}
-                </CardDescription>
+              <CardHeader className="flex flex-row items-start justify-between">
+                <div className="grid gap-0.5">
+                  <CardTitle>{session.title}</CardTitle>
+                  <CardDescription>
+                    {new Date(session.startTime).toLocaleDateString('en-US', { dateStyle: 'long' })}
+                  </CardDescription>
+                </div>
+                {/* --- NEW: Dropdown Menu for Actions --- */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {/* We can add an "Edit" link/item here in the future */}
+                    <DeleteSessionButton sessionId={session.id} />
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">

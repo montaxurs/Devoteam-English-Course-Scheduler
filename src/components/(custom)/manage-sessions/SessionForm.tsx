@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, type Resolver } from "react-hook-form"; // Import Resolver
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { sessionFormSchema, type SessionFormValues } from "@/lib/schemas";
 import { createSession } from "@/lib/actions";
@@ -16,30 +16,37 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // Import RadioGroup
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransition } from "react";
 import { Loader2 } from "lucide-react";
 
+// Helper function to format a date for the datetime-local input
+const toDateTimeLocal = (date: Date) => {
+  const ten = (i: number) => (i < 10 ? '0' : '') + i;
+  const YYYY = date.getFullYear();
+  const MM = ten(date.getMonth() + 1);
+  const DD = ten(date.getDate());
+  const HH = ten(date.getHours());
+  const mm = ten(date.getMinutes());
+  return `${YYYY}-${MM}-${DD}T${HH}:${mm}`;
+};
+
 export function SessionForm() {
   const [isPending, startTransition] = useTransition();
 
+  const defaultStartTime = new Date();
+  defaultStartTime.setDate(defaultStartTime.getDate() + 1);
+  defaultStartTime.setHours(10, 0, 0, 0);
+
   const form = useForm<SessionFormValues>({
-    resolver: zodResolver(sessionFormSchema),
-    // FIX: The default value for capacity must be a string to match the schema's
-    // initial expectation before transformation. All fields are now present.
+    resolver: zodResolver(sessionFormSchema) as Resolver<SessionFormValues>,
     defaultValues: {
       title: "",
       description: "",
       proficiencyLevel: undefined,
-      startTime: "",
-      endTime: "",
+      startTime: toDateTimeLocal(defaultStartTime),
+      endTime: toDateTimeLocal(new Date(defaultStartTime.getTime() + 60 * 60 * 1000)),
       capacity: 10,
     },
   });
@@ -87,29 +94,40 @@ export function SessionForm() {
                 </FormItem>
               )}
             />
+            
+            {/* FIX: Replaced Select with RadioGroup for Proficiency Level */}
+            <FormField
+              control={form.control}
+              name="proficiencyLevel"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Proficiency Level</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1 md:flex-row md:space-y-0 md:space-x-6"
+                    >
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl><RadioGroupItem value="beginner" /></FormControl>
+                        <FormLabel className="font-normal">Beginner</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl><RadioGroupItem value="intermediate" /></FormControl>
+                        <FormLabel className="font-normal">Intermediate</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl><RadioGroupItem value="advanced" /></FormControl>
+                        <FormLabel className="font-normal">Advanced</FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="proficiencyLevel"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Proficiency Level</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a level" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="capacity"
@@ -117,13 +135,18 @@ export function SessionForm() {
                   <FormItem>
                     <FormLabel>Capacity</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(event) => field.onChange(Number(event.target.value))}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+            
             <div className="grid md:grid-cols-2 gap-6">
                <FormField
                 control={form.control}

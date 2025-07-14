@@ -8,7 +8,67 @@ import { and, eq, gte, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { sessionFormSchema, type SessionFormValues, materialFormSchema, type MaterialFormValues } from "./schemas";
 
-// --- USER SYNC ---
+// ... (All of your existing actions up to this point remain the same)
+
+/**
+ * ============================================================================
+ * MANAGEMENT ACTIONS
+ * ============================================================================
+ */
+
+export async function getMyCreatedSessions() {
+  const { userId } = await auth();
+  if (!userId) return [];
+  return await db.query.SessionsTable.findMany({
+    where: eq(SessionsTable.creatorId, userId),
+    with: {
+      participants: { columns: { userId: true } },
+    },
+    orderBy: (sessions, { desc }) => [desc(sessions.startTime)],
+  });
+}
+
+/**
+ * NEW: Deletes a session from the database.
+ * Also performs a security check to ensure the user owns the session.
+ * @param sessionId The UUID of the session to delete.
+ */
+export async function deleteSession(sessionId: string) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("You must be logged in to delete a session.");
+  }
+
+  // Security Check: Verify the user owns the session before deleting.
+  const session = await db.query.SessionsTable.findFirst({
+    where: and(
+      eq(SessionsTable.id, sessionId),
+      eq(SessionsTable.creatorId, userId)
+    ),
+    columns: { id: true } // We only need the ID for verification.
+  });
+
+  if (!session) {
+    return { error: "Session not found or you do not have permission to delete it." };
+  }
+
+  try {
+    // Because of 'onDelete: cascade' in our schema, this will also delete
+    // all associated bookings and materials automatically.
+    await db.delete(SessionsTable).where(eq(SessionsTable.id, sessionId));
+  } catch (error) {
+    console.error("Database Delete Error:", error);
+    return { error: "Database Error: Failed to delete session." };
+  }
+
+  // Revalidate paths to update the UI immediately
+  revalidatePath("/manage-sessions");
+  revalidatePath("/dashboard");
+  return { success: "Session deleted successfully." };
+}
+
+
+// ... (The rest of your actions file remains unchanged)
 export async function syncUser() {
   const user = await currentUser();
   if (!user) return;
@@ -22,7 +82,6 @@ export async function syncUser() {
   });
 }
 
-// --- SESSION & BOOKING ACTIONS ---
 export async function createSession(payload: SessionFormValues) {
   const { userId } = await auth();
   if (!userId) { throw new Error("You must be logged in."); }
@@ -62,13 +121,23 @@ export async function getSessionDetails(sessionId: string) {
     with: {
       creator: true,
       participants: { with: { user: true } },
+      materials: true,
     },
   });
 }
 
+export async function getAllSessionIds() {
+  const sessions = await db.query.SessionsTable.findMany({
+    columns: {
+      id: true,
+    },
+  });
+  return sessions;
+}
+
 export async function createBooking(sessionId: string) {
   const { userId } = await auth();
-  if (!userId) { throw new Error("You must be logged in."); }
+  if (!userId) { throw new Error("You must be logged in to book a session."); }
   const session = await db.query.SessionsTable.findFirst({
     where: eq(SessionsTable.id, sessionId),
     with: { participants: true },
@@ -104,7 +173,7 @@ export async function getMyBookedSessions() {
 
 export async function cancelBooking(bookingId: string) {
   const { userId } = await auth();
-  if (!userId) { throw new Error("You must be logged in."); }
+  if (!userId) { throw new Error("You must be logged in to cancel a booking."); }
   const booking = await db.query.BookingsTable.findFirst({
     where: and(eq(BookingsTable.id, bookingId), eq(BookingsTable.userId, userId)),
   });
@@ -119,32 +188,20 @@ export async function cancelBooking(bookingId: string) {
   }
 }
 
-// --- MANAGEMENT ACTIONS ---
-export async function getMyCreatedSessions() {
-  const { userId } = await auth();
-  if (!userId) return [];
-  return await db.query.SessionsTable.findMany({
-    where: eq(SessionsTable.creatorId, userId),
-    with: {
-      participants: { columns: { userId: true } },
-    },
-    orderBy: (sessions, { desc }) => [desc(sessions.startTime)],
-  });
-}
+type CreateMaterialPayload = {
+  title: string;
+  sessionId: string;
+  type: 'file' | 'link';
+  url: string;
+};
 
-export async function createCourseMaterial(values: MaterialFormValues) {
+export async function createCourseMaterial(payload: CreateMaterialPayload) {
   const { userId } = await auth();
   if (!userId) { throw new Error("You must be logged in."); }
-  const validatedFields = materialFormSchema.safeParse(values);
-  if (!validatedFields.success) { return { error: "Invalid fields." }; }
-  const { title, type, url, sessionId, file } = validatedFields.data;
-  let materialUrl = url;
-  if (type === 'file' && file) {
-    materialUrl = `https://fake-storage.com/${file.name}`; // Placeholder for real upload
-  }
-  if (!materialUrl) { return { error: "A URL or a file is required." }; }
+  const { title, type, url, sessionId } = payload;
+  if (!url) { return { error: "A final URL is required." }; }
   try {
-    await db.insert(CourseMaterialsTable).values({ title, type, url: materialUrl, sessionId });
+    await db.insert(CourseMaterialsTable).values({ title, type, url, sessionId });
   } catch (error) {
     return { error: "Database Error: Failed to create material." };
   }

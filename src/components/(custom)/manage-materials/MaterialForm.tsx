@@ -19,11 +19,17 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTransition } from "react";
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle, ChevronsUpDown } from "lucide-react";
 import { type SelectSession } from "@/schema";
+import { cn } from "@/lib/utils";
 
 type MaterialFormProps = {
   sessions: SelectSession[];
@@ -35,7 +41,6 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
   
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(materialFormSchema),
-    // FIX: Provide default values for ALL form fields to prevent uncontrolled input error.
     defaultValues: {
       title: "",
       type: "link",
@@ -51,7 +56,6 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
     startTransition(async () => {
       let finalUrl = values.url;
 
-      // If the user selected 'file', upload it to Vercel Blob first.
       if (values.type === 'file' && values.file) {
         const formData = new FormData();
         formData.append('file', values.file);
@@ -62,15 +66,19 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
           alert(uploadResult.error || "A critical error occurred during file upload.");
           return;
         }
-        // Use the REAL URL from Vercel Blob.
         finalUrl = uploadResult.blob.url;
       }
 
-      // Now, call the database action with the correct, final URL.
+      if (!finalUrl) {
+          alert("A URL or file is required.");
+          return;
+      }
+
       const dbResult = await createCourseMaterial({
-        ...values,
-        url: finalUrl, // FIX: Pass the real URL to the database action.
-        file: undefined, // We don't need to pass the file object to this action.
+        title: values.title,
+        sessionId: values.sessionId,
+        type: values.type,
+        url: finalUrl,
       });
       
       if (dbResult?.error) {
@@ -105,22 +113,52 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
                 </FormItem>
               )}
             />
+            
+            {/* FIX: Replaced Select with DropdownMenu */}
             <FormField
               control={form.control}
               name="sessionId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Associate with Session</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select a session" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      {sessions.map(s => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground "
+                          )}
+                        >
+                          {field.value
+                            ? sessions.find(
+                                (session) => session.id === field.value
+                              )?.title
+                            : "Select a session"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                      {sessions.map((session) => (
+                        <DropdownMenuItem
+                          key={session.id}
+                          onSelect={() => {
+                            form.setValue("sessionId", session.id);
+                          }}
+                        >
+                          {session.title}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="type"
@@ -160,9 +198,13 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
                     <FormControl>
                         <Input
                             {...fieldProps}
+                            value={undefined}
                             type="file"
                             accept=".pdf"
-                            onChange={(event) => onChange(event.target.files && event.target.files[0])}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              onChange(file);
+                            }}
                         />
                     </FormControl>
                     <FormMessage />
