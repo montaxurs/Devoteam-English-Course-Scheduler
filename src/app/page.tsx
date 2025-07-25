@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
 // A wrapper component for consistent section styling
 // FIX: Added 'id' to the component's props to resolve TypeScript errors.
@@ -66,7 +67,7 @@ export default function LandingPage() {
               priority
             />
             <p className="font-bold text-lg hidden sm:block text-foreground">
-              English Course Scheduler
+              Devoteam Course Scheduler
             </p>
           </div>
           <div className="flex flex-1 items-center justify-end gap-2 ">
@@ -95,13 +96,13 @@ export default function LandingPage() {
               className="flex flex-col items-center lg:items-start text-center lg:text-left"
             >
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground">
-                Devoteam English Course Scheduler
+                Devoteam Course Scheduler
               </h1>
               <p className="mt-4 text-xl md:text-2xl text-muted-foreground font-light">
-                Elevate Your English, <span className="font-semibold text-primary">Together.</span>
+                Elevate Your Skills, <span className="font-semibold text-primary">Together.</span>
               </p>
               <p className="mt-6 text-base leading-relaxed max-w-prose">
-                Welcome to your dedicated platform for seamless coordination and participation in our internal English language training sessions. Designed exclusively for Devoteamers, this tool simplifies time management, ensures optimal group sizes, and fosters collaborative learning.
+                Welcome to your dedicated platform for coordinating and participating in all internal training sessions. This tool simplifies scheduling, ensures optimal group sizes, and fosters collaborative learning across Devoteam.
               </p>
               <div className="mt-8">
                 <SignedOut>
@@ -123,7 +124,7 @@ export default function LandingPage() {
               className="hidden lg:flex justify-center"
             >
               <Image 
-                src="/devoteam English Course Scheduler Tn.jpg" 
+                src="/devoteam English Course Scheduler Tn.png" 
                 alt="Scheduler illustration" 
                 width={450} 
                 height={450}
@@ -132,6 +133,58 @@ export default function LandingPage() {
             </motion.div>
           </div>
         </section>
+
+
+                {/* --- NEW: Featured AI Courses Section --- */}
+        <SectionWrapper id="featured-courses" className="bg-secondary">
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              New! Featured AI Courses
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Expand your skills with our new lineup of Artificial Intelligence training sessions.
+            </p>
+          </div>
+          <div className="mt-16 grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Card for AI 101 */}
+            <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} viewport={{ once: true }}>
+              <Card className="h-full shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-xl">Introduction to AI - 101</CardTitle>
+                    <Badge variant="default">New</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <p className="text-muted-foreground">Get started with the fundamentals of Artificial Intelligence. This session covers key concepts and practical applications.</p>
+                  <div className="mt-4 text-sm space-y-2">
+                    <p><span className="font-semibold">Instructor:</span> Bedioui Samy</p>
+                    <p><span className="font-semibold">Next Session:</span> Friday at 4:00 PM (Tunis Time)</p>
+                    <p><span className="font-semibold">Tuesday Session:</span> Coming Soon</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+            {/* Card for Prompt Engineering 102 */}
+            <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} viewport={{ once: true }}>
+              <Card className="h-full shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col border-dashed">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-xl">Prompt Engineering 102</CardTitle>
+                    <Badge variant="secondary">New</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <p className="text-muted-foreground">Learn how to craft effective prompts to get the most out of large language models like Gemini.</p>
+                  <div className="mt-4 text-sm space-y-2">
+                      <p><span className="font-semibold">Instructor:</span> Bedioui Samy</p>
+                      <p>Coming Soon..</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </SectionWrapper>
 
         {/* Key Features Section */}
         <SectionWrapper id="features" className="bg-secondary">
@@ -144,7 +197,7 @@ export default function LandingPage() {
           <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               { icon: CalendarDays, title: "Effortless Coordination", description: "Find and book sessions with our intuitive calendar view." },
-              { icon: BarChart3, title: "Tailored Learning Paths", description: "Explore sessions for Beginner, Intermediate, and Advanced levels." },
+              { icon: BarChart3, title: "Diverse Course Catalog", description: "Explore courses in Language, AI, Cloud, and more." },
               { icon: Users, title: "Collaborative Insights", description: "See who's attending each session to connect with colleagues." },
               { icon: CheckCircle, title: "Real-time Availability", description: "Live updates on available slots ensure you always find a spot." },
               { icon: LogIn, title: "Devoteam Gmail Integration", description: "Secure and convenient access using your Devoteam account." },
@@ -176,7 +229,7 @@ export default function LandingPage() {
         {/* How It Works Section */}
         <SectionWrapper id="how-it-works">
             <div className="text-center max-w-3xl mx-auto">
-                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Your Path to Fluency</h2>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Your Path to Excellence</h2>
                 <p className="mt-4 text-lg text-muted-foreground">
                     Getting started is simple. Follow these easy steps.
                 </p>
@@ -268,9 +321,9 @@ export default function LandingPage() {
         {/* Final CTA Section */}
         <SectionWrapper>
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Ready to Enhance Your English?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Ready to Grow Your Skills?</h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Join the Devoteam English learning community today and take the next step in your professional development.
+              Join the Devoteam learning community today and take the next step in your professional development.
             </p>
             <div className="mt-8">
               <SignedOut>

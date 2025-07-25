@@ -13,8 +13,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Devoteam English Course Scheduler",
-  description: "Elevate Your English, Together.",
+  title: "Devoteam Course Scheduler",
+  description: "Elevate Your Skills, Together.",
 };
 
 // This is an invisible server component that runs on every authenticated page load

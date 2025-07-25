@@ -90,7 +90,8 @@ export async function createBooking(sessionId: string) {
 export async function getMyBookedSessions() {
   const { userId } = await auth();
   if (!userId) return [];
-  return await db.query.BookingsTable.findMany({
+  
+  const bookings = await db.query.BookingsTable.findMany({
     where: eq(BookingsTable.userId, userId),
     with: {
       session: {
@@ -101,6 +102,12 @@ export async function getMyBookedSessions() {
     },
     orderBy: (bookings, { desc }) => [desc(bookings.createdAt)],
   });
+
+  // Modify the return statement to add the type identifier
+  return bookings.map(booking => ({
+    ...booking,
+    type: 'english' as const,
+  }));
 }
 
 export async function cancelBooking(bookingId: string) {

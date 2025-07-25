@@ -12,8 +12,6 @@ export const sessionFormSchema = z.object({
   endTime: z.string().refine((val) => val && !isNaN(Date.parse(val)), {
     message: "A valid end date and time is required.",
   }),
-  // FIX: Define capacity directly as a number. The conversion from the input's
-  // string value will be handled explicitly in the form component.
   capacity: z.number().int().positive({
     message: "Capacity must be a positive number.",
   }),
@@ -23,6 +21,29 @@ export const sessionFormSchema = z.object({
 });
 
 export type SessionFormValues = z.infer<typeof sessionFormSchema>;
+
+/**
+ * NEW: AI Session Form Schema
+ * Tailored to the specific needs of AI courses.
+ */
+export const aiSessionFormSchema = z.object({
+    title: z.string().min(3, { message: "Title must be at least 3 characters." }),
+    description: z.string().optional(),
+    // CHANGE: Simplified the startTime validation.
+    // We only need to ensure it's a valid date string. The form will provide this.
+    startTime: z.string().refine(val => !isNaN(Date.parse(val)), {
+        message: "A valid start date and time is required."
+    }),
+    durationInMinutes: z.number().int().positive().default(90),
+    capacity: z.number().int().max(10),
+    minCapacity: z.number().int().min(6),
+}).refine(data => data.capacity >= data.minCapacity, {
+    message: "Max capacity must be greater than or equal to min capacity.",
+    path: ["capacity"],
+});
+export type AiSessionFormValues = z.infer<typeof aiSessionFormSchema>;
+
+
 
 
 // --- Material Form Schema (No changes needed here) ---

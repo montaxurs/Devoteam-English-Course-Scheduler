@@ -57,12 +57,13 @@ export function AppHeader() {
                             className="rounded-md ml-5"
                         />
                         <span className="hidden font-bold sm:inline-block">
-                            English Scheduler
+                            Course Scheduler
                         </span>
                     </Link>
                 </div>
                 <nav className="flex items-center gap-6 text-sm">
                     <NavLink href="/dashboard">Dashboard</NavLink>
+                    <NavLink href="/ai-courses">AI Courses</NavLink>
                     <NavLink href="/my-schedule">My Schedule</NavLink>
                     <NavLink href="/manage-sessions">Manage Sessions</NavLink>
                     <NavLink href="/manage-materials">Manage Materials</NavLink>
