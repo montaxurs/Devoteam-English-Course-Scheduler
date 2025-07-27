@@ -111,7 +111,7 @@ export function AiCoursesClient({ scheduledSessions, comingSoonCourse }: AiCours
                                  </CardTitle>
                                  <CardDescription className="text-slate-400">
                                      {nextFridaySession 
-                                         ? `${new Date(nextFridaySession.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} (Tunis Time)`
+                                         ? `04:00 PM (Tunis Time)`
                                          : "To be scheduled"
                                      }
                                  </CardDescription>
