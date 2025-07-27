@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { materialFormSchema, type MaterialFormValues } from "@/lib/schemas";
 import { createCourseMaterial } from "@/lib/actions";
+import { createAiCourseMaterial } from "@/lib/actions-ai"; // Import AI action
 import { uploadFile } from "@/lib/upload-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,18 +25,22 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTransition } from "react";
-import { Loader2, PlusCircle, ChevronsUpDown } from "lucide-react";
-import { type SelectSession } from "@/schema";
+import { Loader2, PlusCircle, ChevronsUpDown, BookText, BrainCircuit } from "lucide-react";
+import { type SelectSession, type SelectAiSession } from "@/schema";
 import { cn } from "@/lib/utils";
 
+// The form now accepts both English and AI sessions
 type MaterialFormProps = {
-  sessions: SelectSession[];
+  englishSessions: SelectSession[];
+  aiSessions: SelectAiSession[];
 };
 
-export function MaterialForm({ sessions }: MaterialFormProps) {
+export function MaterialForm({ englishSessions, aiSessions }: MaterialFormProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isPending, startTransition] = useTransition();
   
@@ -51,11 +56,16 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
   });
 
   const materialType = form.watch("type");
+  const selectedSessionId = form.watch("sessionId");
+
+  // Helper to determine if the selected session is an AI session
+  const isAiSession = aiSessions.some(s => s.id === selectedSessionId);
 
   async function onSubmit(values: MaterialFormValues) {
     startTransition(async () => {
       let finalUrl = values.url;
 
+      // 1. Handle file upload if necessary
       if (values.type === 'file' && values.file) {
         const formData = new FormData();
         formData.append('file', values.file);
@@ -69,18 +79,30 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
         finalUrl = uploadResult.blob.url;
       }
 
-      if (!finalUrl) {
-          alert("A URL or file is required.");
+      if (!finalUrl || !values.sessionId) {
+          alert("A session and either a URL or file are required.");
           return;
       }
 
-      const dbResult = await createCourseMaterial({
-        title: values.title,
-        sessionId: values.sessionId,
-        type: values.type,
-        url: finalUrl,
-      });
+      // 2. Call the correct server action based on session type
+      let dbResult;
+      if (isAiSession) {
+        dbResult = await createAiCourseMaterial({
+          title: values.title,
+          aiSessionId: values.sessionId,
+          type: values.type,
+          url: finalUrl,
+        });
+      } else {
+        dbResult = await createCourseMaterial({
+          title: values.title,
+          sessionId: values.sessionId,
+          type: values.type,
+          url: finalUrl,
+        });
+      }
       
+      // 3. Handle the result
       if (dbResult?.error) {
         alert(dbResult.error);
       } else {
@@ -89,6 +111,12 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
       }
     });
   }
+  
+  // Combine all sessions for the dropdown
+  const allSessions = [
+      ...englishSessions.map(s => ({...s, courseType: 'English'})),
+      ...aiSessions.map(s => ({...s, courseType: 'AI'}))
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -98,7 +126,7 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Course Material</DialogTitle>
-          <DialogDescription>Upload a file or add a link to share.</DialogDescription>
+          <DialogDescription>Upload a file or add a link to an English or AI session.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -114,7 +142,6 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
               )}
             />
             
-            {/* FIX: Replaced Select with DropdownMenu */}
             <FormField
               control={form.control}
               name="sessionId"
@@ -133,23 +160,31 @@ export function MaterialForm({ sessions }: MaterialFormProps) {
                           )}
                         >
                           {field.value
-                            ? sessions.find(
-                                (session) => session.id === field.value
-                              )?.title
+                            ? allSessions.find(s => s.id === field.value)?.title
                             : "Select a session"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                      {sessions.map((session) => (
+                      <DropdownMenuLabel>English Courses</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {englishSessions.map((session) => (
                         <DropdownMenuItem
                           key={session.id}
-                          onSelect={() => {
-                            form.setValue("sessionId", session.id);
-                          }}
+                          onSelect={() => form.setValue("sessionId", session.id)}
                         >
-                          {session.title}
+                           <BookText className="mr-2 h-4 w-4 text-blue-500" /> {session.title}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuLabel className="pt-2">AI Courses</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {aiSessions.map((session) => (
+                        <DropdownMenuItem
+                          key={session.id}
+                           onSelect={() => form.setValue("sessionId", session.id)}
+                        >
+                          <BrainCircuit className="mr-2 h-4 w-4 text-purple-500" /> {session.title}
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>

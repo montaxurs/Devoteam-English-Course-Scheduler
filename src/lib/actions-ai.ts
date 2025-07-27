@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { AiBookingsTable, AiSessionsTable } from "@/schema";
+import { AiBookingsTable, AiCourseMaterialsTable, AiSessionsTable } from "@/schema";
 import { and, eq, gte } from "drizzle-orm";
 import { AiSessionFormValues } from "./schemas";
 
@@ -193,5 +193,55 @@ export async function createAiBooking(sessionId: string) {
         return { success: "Session booked!" };
     } catch (e) {
         return { error: "An unexpected error occurred." };
+    }
+}
+
+/**
+ * ============================================================================
+ * AI MATERIAL MANAGEMENT ACTIONS
+ * ============================================================================
+ */
+
+type CreateAiMaterialPayload = {
+  title: string;
+  aiSessionId: string;
+  type: 'file' | 'link';
+  url: string;
+};
+
+/**
+ * Creates a new course material for a specific AI session.
+ */
+export async function createAiCourseMaterial(payload: CreateAiMaterialPayload) {
+  const { userId } = await auth();
+  if (!userId) { throw new Error("You must be logged in."); }
+
+  const { title, type, url, aiSessionId } = payload;
+  if (!url) { return { error: "A final URL is required." }; }
+
+  try {
+    await db.insert(AiCourseMaterialsTable).values({ title, type, url, aiSessionId });
+    revalidatePath("/manage-materials");
+    revalidatePath(`/ai-sessions/${aiSessionId}`);
+    return { success: "AI Material added successfully!" };
+  } catch (error) {
+    console.error("AI Material Creation Error:", error);
+    return { error: "Database Error: Failed to create AI material." };
+  }
+}
+
+/**
+ * Deletes a specific course material for an AI session.
+ */
+export async function deleteAiCourseMaterial(materialId: string) {
+    const { userId } = await auth();
+    if (!userId) { throw new Error("You must be logged in."); }
+    try {
+        await db.delete(AiCourseMaterialsTable).where(eq(AiCourseMaterialsTable.id, materialId));
+        revalidatePath("/manage-materials");
+        // We don't know the session ID here, but the manage page is the most important
+        return { success: "Material deleted." };
+    } catch (error) {
+        return { error: "Database Error: Failed to delete material." };
     }
 }

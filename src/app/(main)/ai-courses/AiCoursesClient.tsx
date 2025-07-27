@@ -111,7 +111,7 @@ export function AiCoursesClient({ scheduledSessions, comingSoonCourse }: AiCours
                                  </CardTitle>
                                  <CardDescription className="text-slate-400">
                                      {nextFridaySession 
-                                         ? `${new Date(nextFridaySession.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Tunis' })} (Tunis Time)`
+                                         ? `${new Date(nextFridaySession.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} (Tunis Time)`
                                          : "To be scheduled"
                                      }
                                  </CardDescription>
@@ -131,7 +131,7 @@ export function AiCoursesClient({ scheduledSessions, comingSoonCourse }: AiCours
                                  </CardTitle>
                                  <CardDescription className="text-slate-400">
                                       {nextTuesdaySession 
-                                         ? `${new Date(nextTuesdaySession.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Tunis' })} (Tunis Time)`
+                                         ? `${new Date(nextTuesdaySession.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} (Tunis Time)`
                                          : "Instructors will be announced soon."
                                       }
                                  </CardDescription>
